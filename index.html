@@ -1,0 +1,1904 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#008069">
+    <link rel="icon" href="data:,">
+    <title>Asistente de Respuestas y Pedidos para WhatsApp</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-color: #111b21;
+            --text-secondary: #667781;
+            --primary: #00a884;
+            --primary-dark: #008069;
+            --accent: #25d366;
+            --border-color: #e9edef;
+            --danger: #ea0038;
+            --warning: #f5a623;
+            --success: #25d366;
+            --nav-bg: #ffffff;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #0b141a;
+            --card-bg: #111b21;
+            --text-color: #e9edef;
+            --text-secondary: #8696a0;
+            --primary: #00a884;
+            --primary-dark: #008069;
+            --accent: #25d366;
+            --border-color: #222d34;
+            --danger: #f15c6d;
+            --warning: #f0c265;
+            --success: #00a884;
+            --nav-bg: #1f2c34;
+            --shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding-bottom: 70px;
+        }
+
+        header {
+            background-color: var(--nav-bg);
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            font-size: 1.1rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* Navigation Bar Bottom (5 tabs for mobile) */
+        nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--nav-bg);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 4px;
+            z-index: 1000;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 8px;
+            transition: 0.2s;
+            flex: 1;
+            max-width: 65px;
+        }
+
+        .nav-btn span.icon {
+            font-size: 1.2rem;
+        }
+
+        .nav-btn.active {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        main {
+            padding: 16px;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            flex: 1;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            color: var(--text-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-wa {
+            background-color: var(--accent);
+            color: #fff;
+        }
+
+        .btn-wa:hover {
+            background-color: #1ebd5a;
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--border-color);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #d00030;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            font-size: 0.95rem;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-nuevo { background-color: #e0f2fe; color: #0369a1; }
+        .badge-preparando { background-color: #fef3c7; color: #b45309; }
+        .badge-listo { background-color: #d1fae5; color: #047857; }
+        .badge-entregado { background-color: #f3f4f6; color: #4b5563; }
+
+        /* Toast notification (fully hidden when inactive) */
+        #toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        #toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1500;
+            padding: 16px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .list-item {
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background-color: var(--card-bg);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .list-item-info h4 {
+            font-size: 1rem;
+            margin-bottom: 2px;
+        }
+
+        .list-item-info p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .search-box {
+            margin-bottom: 12px;
+        }
+
+        /* Print styling */
+        #print-ticket-area {
+            display: none;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+            body.imprimiendo-ticket #print-ticket-area,
+            body.imprimiendo-ticket #print-ticket-area * {
+                visibility: visible !important;
+            }
+            body.imprimiendo-ticket #print-ticket-area {
+                display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 48mm;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 11px;
+                color: #000;
+                background: #fff;
+                padding: 5px;
+            }
+
+            body.imprimiendo-resumen #tab-resumen,
+            body.imprimiendo-resumen #tab-resumen * {
+                visibility: visible !important;
+            }
+            body.imprimiendo-resumen #tab-resumen {
+                display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: #fff;
+                color: #000;
+            }
+            body.imprimiendo-resumen #tab-resumen button {
+                display: none !important;
+            }
+        }
+
+        @media (min-width: 768px) {
+            nav {
+                top: 0;
+                bottom: auto;
+                border-top: none;
+                border-bottom: 1px solid var(--border-color);
+                justify-content: center;
+                gap: 12px;
+                padding: 10px;
+            }
+            .nav-btn {
+                flex: none;
+                width: auto;
+                min-width: 70px;
+            }
+            body {
+                padding-bottom: 0;
+                padding-top: 60px;
+            }
+            #nav-mas {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>💬 Asistente WhatsApp</h1>
+        <div class="header-actions">
+            <button class="btn btn-secondary" id="btn-theme-toggle" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
+        </div>
+    </header>
+
+    <!-- Navigation Bar Bottom (5 items for mobile) -->
+    <nav>
+        <button class="nav-btn active" onclick="switchTab('tab-respuestas')" id="nav-respuestas">
+            <span class="icon">⚡</span><span>Respuestas</span>
+        </button>
+        <button class="nav-btn" onclick="switchTab('tab-pedidos')" id="nav-pedidos">
+            <span class="icon">🛒</span><span>Pedidos</span>
+        </button>
+        <button class="nav-btn" onclick="switchTab('tab-pendientes')" id="nav-pendientes">
+            <span class="icon">📌</span><span>Pendientes</span>
+        </button>
+        <button class="nav-btn" onclick="switchTab('tab-resumen')" id="nav-resumen">
+            <span class="icon">📊</span><span>Resumen</span>
+        </button>
+        <button class="nav-btn" onclick="openModal('modal-mas')" id="nav-mas">
+            <span class="icon">☰</span><span>Más</span>
+        </button>
+    </nav>
+
+    <main>
+        <!-- TAB 1: RESPUESTAS RÁPIDAS -->
+        <div id="tab-respuestas" class="tab-content active">
+            <div class="card">
+                <h2>⚡ Respuestas Rápidas 
+                    <button class="btn" onclick="openModal('modal-respuesta')" id="btn-nueva-respuesta">+ Nueva</button>
+                </h2>
+                <input type="text" id="search-respuestas" class="search-box" placeholder="Buscar respuesta..." oninput="renderRespuestas()">
+                <div id="lista-respuestas"></div>
+            </div>
+        </div>
+
+        <!-- TAB 2: CATÁLOGO -->
+        <div id="tab-catalogo" class="tab-content">
+            <div class="card">
+                <h2>📦 Catálogo de Productos
+                    <button class="btn" onclick="openModal('modal-producto')" id="btn-nuevo-producto">+ Producto</button>
+                </h2>
+                <div class="flex-row" style="margin-bottom: 12px;">
+                    <input type="text" id="search-catalogo" placeholder="Buscar producto..." oninput="renderCatalogo()" style="margin-bottom:0;">
+                    <button class="btn btn-wa" onclick="enviarCatalogoWhatsApp()" id="btn-wa-catalogo">📢 Mandar Catálogo</button>
+                </div>
+                <div id="lista-catalogo"></div>
+            </div>
+        </div>
+
+        <!-- TAB 3: PEDIDOS -->
+        <div id="tab-pedidos" class="tab-content">
+            <div class="card">
+                <h2>🛒 Gestión de Pedidos
+                    <button class="btn" onclick="openModalPedido()" id="btn-nuevo-pedido">+ Nuevo Pedido</button>
+                </h2>
+                <div class="grid-2">
+                    <div>
+                        <label>Filtrar por estado</label>
+                        <select id="filtro-estado-pedido" onchange="renderPedidos()">
+                            <option value="todos">Todos</option>
+                            <option value="nuevo">Nuevo</option>
+                            <option value="preparando">Preparando</option>
+                            <option value="listo">Listo</option>
+                            <option value="entregado">Entregado</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Buscar cliente</label>
+                        <input type="text" id="search-pedidos" placeholder="Nombre o teléfono..." oninput="renderPedidos()">
+                    </div>
+                </div>
+                <div id="lista-pedidos"></div>
+            </div>
+        </div>
+
+        <!-- TAB 4: CLIENTES -->
+        <div id="tab-clientes" class="tab-content">
+            <div class="card">
+                <h2>👥 Clientes Frecuentes</h2>
+                <input type="text" id="search-clientes" class="search-box" placeholder="Buscar cliente por nombre o teléfono..." oninput="renderClientes()">
+                <div id="lista-clientes"></div>
+            </div>
+        </div>
+
+        <!-- TAB 5: PENDIENTES -->
+        <div id="tab-pendientes" class="tab-content">
+            <div class="card">
+                <h2>📌 Pendientes y Seguimiento
+                    <button class="btn" onclick="openModal('modal-pendiente')" id="btn-nuevo-pendiente">+ Pendiente</button>
+                </h2>
+                <div id="lista-pendientes"></div>
+            </div>
+        </div>
+
+        <!-- TAB 6: RESUMEN DEL DÍA -->
+        <div id="tab-resumen" class="tab-content">
+            <div class="card">
+                <h2>📊 Resumen del Día</h2>
+                <div class="grid-2">
+                    <div>
+                        <label>Seleccionar Fecha</label>
+                        <input type="date" id="resumen-fecha" onchange="renderResumen()">
+                    </div>
+                    <div style="display: flex; align-items: flex-end; gap: 8px;">
+                        <button class="btn btn-wa" onclick="compartirResumenWhatsApp()" id="btn-wa-resumen" style="flex:1;">📢 Compartir</button>
+                        <button class="btn btn-secondary" onclick="imprimirResumenDelDia()" id="btn-imprimir-resumen" title="Imprimir Resumen" style="flex:1;">🖨️ Imprimir</button>
+                    </div>
+                </div>
+                <div id="contenido-resumen" style="margin-top: 16px;"></div>
+            </div>
+        </div>
+
+        <!-- TAB 7: IA (MOTOR INTELIGENTE) -->
+        <div id="tab-ia" class="tab-content">
+            <div class="card">
+                <h2>✨ Motor Inteligente (Gemini AI)</h2>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px;">
+                    Pega tu llave de Google Gemini para que la IA sugiera respuestas automáticas basadas en tu catálogo y respuestas guardadas. La llave solo se guarda en este dispositivo.
+                </p>
+                <label>Llave API de Gemini</label>
+                <div class="flex-row">
+                    <input type="password" id="input-gemini-key" placeholder="AIzaSy..." style="margin-bottom:0;">
+                    <button class="btn" onclick="guardarGeminiKey()">Guardar</button>
+                    <button class="btn btn-danger" onclick="borrarGeminiKey()">Borrar</button>
+                </div>
+                <hr style="margin: 16px 0; border:0; border-top:1px solid var(--border-color);">
+                <label>Mensaje recibido del cliente</label>
+                <textarea id="ia-mensaje-cliente" rows="3" placeholder="Ej: Hola, ¿tienes pastel de chocolate disponible y cuánto cuesta?"></textarea>
+                <button class="btn btn-wa" onclick="sugerirRespuestaIA()" id="btn-sugerir-ia">✨ Sugerir Respuesta con IA</button>
+                <div id="ia-resultado-container" style="margin-top: 16px; display:none;">
+                    <label>Sugerencia de respuesta:</label>
+                    <textarea id="ia-texto-sugerido" rows="3"></textarea>
+                    <div class="flex-row" style="margin-top: 8px;">
+                        <button class="btn" onclick="copiarSugerenciaIA()">📋 Copiar</button>
+                        <button class="btn btn-wa" onclick="enviarSugerenciaIAWhatsApp()">💬 Abrir en WhatsApp</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 8: AJUSTES -->
+        <div id="tab-ajustes" class="tab-content">
+            <div class="card">
+                <h2>⚙️ Ajustes del Negocio</h2>
+                <label>Nombre del Negocio</label>
+                <input type="text" id="ajuste-nombre" placeholder="Ej. Antojitos Doña Lucha">
+                
+                <label>Teléfono del Negocio (10 dígitos)</label>
+                <input type="text" id="ajuste-telefono" placeholder="Ej. 5512345678">
+
+                <label>Mensaje de Firma para WhatsApp</label>
+                <textarea id="ajuste-firma" rows="2" placeholder="Ej. ¡Gracias por su compra en Antojitos Doña Lucha! 🌮"></textarea>
+
+                <button class="btn" onclick="guardarAjustes()" id="btn-guardar-ajustes" style="margin-bottom: 16px;">Guardar Ajustes</button>
+
+                <hr style="margin: 16px 0; border:0; border-top:1px solid var(--border-color);">
+                
+                <h2>📂 Respaldos y Datos</h2>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <button class="btn" onclick="exportarJSON()" id="btn-exportar-json">📥 Exportar Respaldo JSON</button>
+                    <button class="btn" onclick="exportarCSV()" id="btn-exportar-csv">📊 Exportar Pedidos CSV</button>
+                    <button class="btn btn-secondary" onclick="document.getElementById('input-import-json').click()" id="btn-importar-json">📤 Importar Respaldo JSON</button>
+                    <input type="file" id="input-import-json" accept=".json" style="display:none" onchange="importarJSON(event)">
+                    <button class="btn btn-secondary" onclick="borrarDatosEjemplo()" id="btn-borrar-ejemplos">🧹 Borrar Datos de Ejemplo</button>
+                    <button class="btn btn-danger" onclick="borrarTodosLosDatos()" id="btn-borrar-todo">🗑️ Borrar Todos los Datos</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- TOAST -->
+    <div id="toast">Notificación</div>
+
+    <!-- MODAL MÁS (Menú móvil para ☰ Más) -->
+    <div id="modal-mas" class="modal">
+        <div class="modal-content" style="max-width: 320px;">
+            <h3 style="margin-bottom: 16px;">Menú Adicional</h3>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="btn btn-secondary" onclick="closeModal('modal-mas'); switchTab('tab-respuestas')">⚡ Respuestas Rápidas</button>
+                <button class="btn btn-secondary" onclick="closeModal('modal-mas'); switchTab('tab-catalogo')">📦 Catálogo de Productos</button>
+                <button class="btn btn-secondary" onclick="closeModal('modal-mas'); switchTab('tab-clientes')">👥 Clientes Frecuentes</button>
+                <button class="btn btn-secondary" onclick="closeModal('modal-mas'); switchTab('tab-ia')">✨ Motor Inteligente (IA)</button>
+                <button class="btn btn-secondary" onclick="closeModal('modal-mas'); switchTab('tab-ajustes')">⚙️ Ajustes del Negocio</button>
+                <button class="btn btn-danger" onclick="closeModal('modal-mas')" style="margin-top: 8px;">Cerrar menú</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL RESPUESTA -->
+    <div id="modal-respuesta" class="modal">
+        <div class="modal-content">
+            <h3 id="titulo-modal-respuesta" style="margin-bottom: 12px;">Nueva Respuesta Rápida</h3>
+            <input type="hidden" id="resp-id">
+            <label>Categoría</label>
+            <select id="resp-categoria">
+                <option value="Precios">Precios</option>
+                <option value="Horarios">Horarios</option>
+                <option value="Ubicación">Ubicación</option>
+                <option value="Formas de pago">Formas de pago</option>
+                <option value="Envío">Envío</option>
+                <option value="Otros">Otros</option>
+            </select>
+            <label>Título corto</label>
+            <input type="text" id="resp-titulo" placeholder="Ej. Precios y menú">
+            <label>Texto (puedes usar {nombre}, {producto}, {total})</label>
+            <textarea id="resp-texto" rows="4" placeholder="Hola {nombre}, nuestros precios son..."></textarea>
+            <div class="flex-row" style="justify-content: flex-end; margin-top: 12px;">
+                <button class="btn btn-secondary" onclick="closeModal('modal-respuesta')">Cancelar</button>
+                <button class="btn" onclick="guardarRespuesta()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PRODUCTO -->
+    <div id="modal-producto" class="modal">
+        <div class="modal-content">
+            <h3 id="titulo-modal-producto" style="margin-bottom: 12px;">Nuevo Producto</h3>
+            <input type="hidden" id="prod-id">
+            <label>Nombre del producto</label>
+            <input type="text" id="prod-nombre" placeholder="Ej. Pastel de chocolate">
+            <label>Precio (MXN)</label>
+            <input type="number" id="prod-precio" step="0.5" placeholder="Ej. 250">
+            <label>Categoría</label>
+            <input type="text" id="prod-categoria" placeholder="Ej. Postres">
+            <label>¿Disponible?</label>
+            <select id="prod-disponible">
+                <option value="true">Sí, disponible</option>
+                <option value="false">No disponible</option>
+            </select>
+            <div class="flex-row" style="justify-content: flex-end; margin-top: 12px;">
+                <button class="btn btn-secondary" onclick="closeModal('modal-producto')">Cancelar</button>
+                <button class="btn" onclick="guardarProducto()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PEDIDO -->
+    <div id="modal-pedido" class="modal">
+        <div class="modal-content">
+            <h3 id="titulo-modal-pedido" style="margin-bottom: 12px;">Nuevo Pedido</h3>
+            <input type="hidden" id="ped-id">
+            <div class="grid-2">
+                <div>
+                    <label>Nombre del Cliente *</label>
+                    <input type="text" id="ped-cliente" placeholder="Ej. María Pérez" required>
+                </div>
+                <div>
+                    <label>Teléfono *</label>
+                    <input type="text" id="ped-telefono" placeholder="Ej. 5511223344" required>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div>
+                    <label>Tipo de Entrega</label>
+                    <select id="ped-entrega" onchange="toggleDireccionEntrega()">
+                        <option value="recoge">Recoge en tienda</option>
+                        <option value="domicilio">A domicilio</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Estado</label>
+                    <select id="ped-estado">
+                        <option value="nuevo">Nuevo</option>
+                        <option value="preparando">Preparando</option>
+                        <option value="listo">Listo</option>
+                        <option value="entregado">Entregado</option>
+                    </select>
+                </div>
+            </div>
+            <div id="div-ped-direccion" style="display:none;">
+                <label>Dirección de entrega</label>
+                <textarea id="ped-direccion" rows="2" placeholder="Calle, número, colonia, referencias"></textarea>
+            </div>
+            
+            <label>Productos del Pedido</label>
+            <div id="ped-renglones-container" style="margin-bottom: 8px;"></div>
+            <button class="btn btn-secondary" onclick="agregarRenglonPedido()" style="margin-bottom: 12px; width: 100%;">+ Agregar producto</button>
+
+            <div class="grid-2">
+                <div>
+                    <label>Anticipo (MXN)</label>
+                    <input type="number" id="ped-anticipo" value="0" step="1" oninput="calcularTotalesPedido()">
+                </div>
+                <div>
+                    <label>Total: $<span id="ped-total-lbl">0.00</span></label>
+                    <label style="color: var(--danger);">Resta: $<span id="ped-resta-lbl">0.00</span></label>
+                </div>
+            </div>
+
+            <label>Notas / Observaciones</label>
+            <textarea id="ped-notas" rows="2" placeholder="Ej. Sin cebolla, entregar a las 4pm"></textarea>
+
+            <div class="flex-row" style="justify-content: flex-end; margin-top: 12px;">
+                <button class="btn btn-secondary" onclick="closeModal('modal-pedido')">Cancelar</button>
+                <button class="btn" onclick="guardarPedido()" id="btn-guardar-pedido">Guardar Pedido</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PENDIENTE -->
+    <div id="modal-pendiente" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 12px;">Nuevo Pendiente</h3>
+            <label>Nombre o Cliente</label>
+            <input type="text" id="pend-nombre" placeholder="Ej. Juan Gómez">
+            <label>Teléfono</label>
+            <input type="text" id="pend-telefono" placeholder="Ej. 5599887766">
+            <label>Nota / Recordatorio</label>
+            <textarea id="pend-nota" rows="3" placeholder="Ej. Preguntar si confirmará el pedido para el fin de semana"></textarea>
+            <div class="flex-row" style="justify-content: flex-end; margin-top: 12px;">
+                <button class="btn btn-secondary" onclick="closeModal('modal-pendiente')">Cancelar</button>
+                <button class="btn" onclick="guardarPendiente()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL VARIABLES RESPUESTA -->
+    <div id="modal-variables" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 12px;" id="titulo-modal-variables">Usar Respuesta Rápida</h3>
+            <input type="hidden" id="var-resp-id">
+            <div id="var-inputs-container"></div>
+            <div class="flex-row" style="justify-content: flex-end; margin-top: 12px; gap: 8px;">
+                <button class="btn btn-secondary" onclick="closeModal('modal-variables')">Cancelar</button>
+                <button class="btn" onclick="copiarRespuestaVariables()" id="btn-copiar-var">📋 Copiar</button>
+                <button class="btn btn-wa" onclick="ejecutarRespuestaConVariables()" id="btn-wa-var">💬 Abrir en WhatsApp</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ÁREA DE TICKET (oculta en pantalla, visible al imprimir ticket) -->
+    <div id="print-ticket-area"></div>
+
+    <script>
+        const STORAGE_KEY = 'asistenteWA_v1';
+        const GEMINI_KEY_STORAGE = 'asistenteWA_llave';
+
+        function hoyLocal() {
+            const d = new Date();
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        }
+
+        let db = {
+            ajustes: {
+                nombre: "Antojitos Doña Lucha",
+                telefono: "5512345678",
+                firma: "¡Gracias por su preferencia en Antojitos Doña Lucha! 🌮"
+            },
+            respuestas: [
+                { id: 1, categoria: "Precios", titulo: "Menú y Precios", texto: "Hola {nombre}! Nuestro menú en el negocio cuenta con ricos platillos. El producto estrella es {producto}. ¿Te paso la lista completa?", ejemplo: true },
+                { id: 2, categoria: "Horarios", titulo: "Horarios de atención", texto: "Hola {nombre}, atendemos de lunes a sábado de 9:00 am a 6:00 pm.", ejemplo: true },
+                { id: 3, categoria: "Ubicación", titulo: "Dirección del local", texto: "Hola {nombre}, estamos ubicados en Av. Principal #123, Colonia Centro.", ejemplo: true },
+                { id: 4, categoria: "Formas de pago", titulo: "Métodos de pago", texto: "Hola {nombre}, aceptamos efectivo y transferencia bancaria.", ejemplo: true },
+                { id: 5, categoria: "Envío", titulo: "Servicio a domicilio", texto: "Hola {nombre}, sí tenemos servicio a domicilio con costo extra según tu zona. ¿Cuál es tu dirección?", ejemplo: true },
+                { id: 6, categoria: "Otros", titulo: "Agradecimiento", texto: "Muchas gracias por tu mensaje {nombre}. Quedamos a tus órdenes.", ejemplo: true }
+            ],
+            catalogo: [
+                { id: 1, nombre: "Tacos de Guisado (Orden x 5)", precio: 75, categoria: "Comida", disponible: true, ejemplo: true },
+                { id: 2, nombre: "Agua Fresca de Horchata 1L", precio: 35, categoria: "Bebidas", disponible: true, ejemplo: true },
+                { id: 3, nombre: "Flan Napolitano Casero", precio: 45, categoria: "Postres", disponible: true, ejemplo: true }
+            ],
+            pedidos: [
+                {
+                    id: 1,
+                    folio: 101,
+                    cliente: "María Pérez",
+                    telefono: "5511223344",
+                    entrega: "domicilio",
+                    direccion: "Calle Juárez #45, Col. Centro",
+                    estado: "preparando",
+                    renglones: [{ productoId: 1, cantidad: 2 }, { productoId: 2, cantidad: 1 }],
+                    anticipo: 50,
+                    total: 185,
+                    resta: 135,
+                    notas: "Sin cebolla en los tacos por favor",
+                    fecha: hoyLocal(),
+                    ejemplo: true
+                }
+            ],
+            pendientes: [
+                { id: 1, nombre: "Carlos Ruiz", telefono: "5599887766", nota: "Confirmar si apartará pastel para el sábado", fecha: hoyLocal(), hecho: false, ejemplo: true }
+            ]
+        };
+
+        let clientesRender = [];
+
+        function initApp() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    db = JSON.parse(saved);
+                } catch(e) {
+                    console.error("Error cargando localStorage", e);
+                }
+            } else {
+                guardarDB();
+            }
+
+            document.getElementById('ajuste-nombre').value = db.ajustes.nombre;
+            document.getElementById('ajuste-telefono').value = db.ajustes.telefono;
+            document.getElementById('ajuste-firma').value = db.ajustes.firma;
+            document.getElementById('resumen-fecha').value = hoyLocal();
+
+            const savedKey = localStorage.getItem(GEMINI_KEY_STORAGE);
+            if (savedKey) {
+                document.getElementById('input-gemini-key').value = savedKey;
+            }
+
+            // Tema por defecto respeta prefers-color-scheme si no hay guardado
+            let savedTheme = localStorage.getItem('asistenteWA_theme');
+            if (!savedTheme) {
+                savedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            document.body.setAttribute('data-theme', savedTheme);
+            document.getElementById('btn-theme-toggle').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+
+            renderRespuestas();
+            renderCatalogo();
+            renderPedidos();
+            renderClientes();
+            renderPendientes();
+            renderResumen();
+        }
+
+        function guardarDB() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+        }
+
+        function toggleTheme() {
+            const current = document.body.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.body.setAttribute('data-theme', next);
+            localStorage.setItem('asistenteWA_theme', next);
+            document.getElementById('btn-theme-toggle').textContent = next === 'dark' ? '☀️' : '🌙';
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            
+            // Marcar nav correspondiente si existe en barra inferior
+            const navMap = {
+                'tab-respuestas': 'nav-respuestas',
+                'tab-pedidos': 'nav-pedidos',
+                'tab-pendientes': 'nav-pendientes',
+                'tab-resumen': 'nav-resumen'
+            };
+            const navId = navMap[tabId];
+            if(navId) {
+                const btn = document.getElementById(navId);
+                if(btn) btn.classList.add('active');
+            } else {
+                const masBtn = document.getElementById('nav-mas');
+                if(masBtn) masBtn.classList.add('active');
+            }
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        function openModal(id) {
+            if(id === 'modal-respuesta') {
+                document.getElementById('titulo-modal-respuesta').textContent = "Nueva Respuesta Rápida";
+                document.getElementById('resp-id').value = '';
+                document.getElementById('resp-titulo').value = '';
+                document.getElementById('resp-texto').value = '';
+            } else if(id === 'modal-producto') {
+                document.getElementById('titulo-modal-producto').textContent = "Nuevo Producto";
+                document.getElementById('prod-id').value = '';
+                document.getElementById('prod-nombre').value = '';
+                document.getElementById('prod-precio').value = '';
+                document.getElementById('prod-categoria').value = '';
+                document.getElementById('prod-disponible').value = 'true';
+            }
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag] || tag)
+            );
+        }
+
+        function normalizarTelefono(tel) {
+            if(!tel) return '';
+            let limpio = String(tel).replace(/\D/g, '');
+            if(limpio.length === 10) {
+                limpio = '52' + limpio;
+            }
+            return limpio;
+        }
+
+        // [Chalan] Agrega la firma solo si existe
+        function conFirma(texto) {
+            const f = (db.ajustes && db.ajustes.firma ? String(db.ajustes.firma).trim() : '');
+            return f ? texto + "\n\n" + f : texto;
+        }
+
+        function abrirWA(telefono, texto) {
+            const telNorm = normalizarTelefono(telefono);
+            const url = `https://wa.me/${telNorm}?text=${encodeURIComponent(texto)}`;
+            window.open(url, '_blank');
+        }
+
+        // --- RESPUESTAS RÁPIDAS ---
+        function renderRespuestas() {
+            const query = (document.getElementById('search-respuestas').value || '').toLowerCase();
+            const container = document.getElementById('lista-respuestas');
+            container.innerHTML = '';
+
+            const filtradas = db.respuestas.filter(r => 
+                r.titulo.toLowerCase().includes(query) || r.texto.toLowerCase().includes(query) || r.categoria.toLowerCase().includes(query)
+            );
+
+            if(filtradas.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding:20px;">No se encontraron respuestas.</p>';
+                return;
+            }
+
+            filtradas.forEach(r => {
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                div.innerHTML = `
+                    <div class="list-item-info">
+                        <span class="badge" style="background-color:var(--border-color); color:var(--text-color); margin-bottom:4px;">${escapeHTML(r.categoria)}</span>
+                        <h4>${escapeHTML(r.titulo)}</h4>
+                        <p style="margin-top:4px; white-space: pre-wrap;">${escapeHTML(r.texto)}</p>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:6px; min-width: 110px;">
+                        <button class="btn" style="padding:6px 10px; font-size:0.8rem;" onclick="prepararUsoRespuesta(${r.id})">📋 Usar / Copiar</button>
+                        <button class="btn btn-secondary" style="padding:4px; font-size:0.75rem;" onclick="editarRespuesta(${r.id})">✏️ Editar</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function guardarRespuesta() {
+            const id = document.getElementById('resp-id').value;
+            const categoria = document.getElementById('resp-categoria').value;
+            const titulo = document.getElementById('resp-titulo').value.trim();
+            const texto = document.getElementById('resp-texto').value.trim();
+
+            if(!titulo || !texto) {
+                alert("Por favor completa el título y el texto.");
+                return;
+            }
+
+            if(id) {
+                const item = db.respuestas.find(r => r.id == id);
+                if(item) {
+                    item.categoria = categoria;
+                    item.titulo = titulo;
+                    item.texto = texto;
+                    delete item.ejemplo;
+                }
+            } else {
+                const nuevoId = db.respuestas.length > 0 ? Math.max(...db.respuestas.map(r => r.id)) + 1 : 1;
+                db.respuestas.push({ id: nuevoId, categoria, titulo, texto });
+            }
+
+            guardarDB();
+            closeModal('modal-respuesta');
+            renderRespuestas();
+            showToast("Respuesta guardada con éxito");
+        }
+
+        function editarRespuesta(id) {
+            const r = db.respuestas.find(item => item.id == id);
+            if(!r) return;
+            document.getElementById('titulo-modal-respuesta').textContent = "Editar Respuesta Rápida";
+            document.getElementById('resp-id').value = r.id;
+            document.getElementById('resp-categoria').value = r.categoria;
+            document.getElementById('resp-titulo').value = r.titulo;
+            document.getElementById('resp-texto').value = r.texto;
+            document.getElementById('modal-respuesta').classList.add('active');
+        }
+
+        function prepararUsoRespuesta(id) {
+            const r = db.respuestas.find(item => item.id == id);
+            if(!r) return;
+
+            // Detectar variables en r.texto
+            const usaNombre = r.texto.includes('{nombre}');
+            const usaProducto = r.texto.includes('{producto}');
+            const usaTotal = r.texto.includes('{total}');
+
+            const container = document.getElementById('var-inputs-container');
+            container.innerHTML = `<input type="hidden" id="var-resp-target-id" value="${r.id}">`;
+
+            if(!usaNombre && !usaProducto && !usaTotal) {
+                container.innerHTML += `<p style="font-size:0.9rem; margin-bottom:8px;">Este mensaje no requiere variables.</p>`;
+            } else {
+                container.innerHTML += `<p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:8px;">Rellena los datos necesarios:</p>`;
+                if(usaNombre) {
+                    container.innerHTML += `<label>Nombre del cliente</label><input type="text" id="var-val-nombre" placeholder="Ej. Juan">`;
+                }
+                if(usaProducto) {
+                    container.innerHTML += `<label>Producto mencionado</label><input type="text" id="var-val-producto" placeholder="Ej. Pastel de chocolate">`;
+                }
+                if(usaTotal) {
+                    container.innerHTML += `<label>Total ($)</label><input type="number" id="var-val-total" placeholder="Ej. 150">`;
+                }
+            }
+            container.innerHTML += `<label>Teléfono (opcional para WhatsApp directo)</label><input type="text" id="var-val-telefono" placeholder="Ej. 5512345678">`;
+
+            document.getElementById('modal-variables').classList.add('active');
+        }
+
+        function obtenerTextoRespuestaProcesado() {
+            const id = document.getElementById('var-resp-target-id').value;
+            const r = db.respuestas.find(item => item.id == id);
+            if(!r) return "";
+
+            let texto = r.texto;
+            const inputNombre = document.getElementById('var-val-nombre');
+            const inputProd = document.getElementById('var-val-producto');
+            const inputTotal = document.getElementById('var-val-total');
+
+            if(inputNombre) texto = texto.replace(/{nombre}/g, inputNombre.value.trim() || "Cliente");
+            if(inputProd) texto = texto.replace(/{producto}/g, inputProd.value.trim() || (db.catalogo[0] ? db.catalogo[0].nombre : "producto"));
+            if(inputTotal) texto = texto.replace(/{total}/g, "$" + (parseFloat(inputTotal.value) || 0).toFixed(2));
+
+            return conFirma(texto);
+        }
+
+        function copiarRespuestaVariables() {
+            const texto = obtenerTextoRespuestaProcesado();
+            navigator.clipboard.writeText(texto);
+            closeModal('modal-variables');
+            showToast("Respuesta copiada al portapapeles");
+        }
+
+        function ejecutarRespuestaConVariables() {
+            const texto = obtenerTextoRespuestaProcesado();
+            const telInput = document.getElementById('var-val-telefono');
+            const telefono = telInput ? telInput.value : '';
+            closeModal('modal-variables');
+            abrirWA(telefono, texto);
+        }
+
+        // --- CATÁLOGO ---
+        function renderCatalogo() {
+            const query = (document.getElementById('search-catalogo').value || '').toLowerCase();
+            const container = document.getElementById('lista-catalogo');
+            container.innerHTML = '';
+
+            const filtrados = db.catalogo.filter(p => 
+                p.nombre.toLowerCase().includes(query) || (p.categoria && p.categoria.toLowerCase().includes(query))
+            );
+
+            if(filtrados.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding:20px;">No hay productos en el catálogo.</p>';
+                return;
+            }
+
+            filtrados.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                div.innerHTML = `
+                    <div class="list-item-info">
+                        <h4>${escapeHTML(p.nombre)}</h4>
+                        <p>Precio: <strong>$${p.precio.toFixed(2)} MXN</strong> ${p.categoria ? '• ' + escapeHTML(p.categoria) : ''}</p>
+                        <span class="badge" style="background-color: ${p.disponible ? '#d1fae5' : '#fee2e2'}; color: ${p.disponible ? '#047857' : '#b91c1c'}; margin-top:4px;">
+                            ${p.disponible ? 'Disponible' : 'No disponible'}
+                        </span>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <button class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem;" onclick="editarProducto(${p.id})">✏️ Editar</button>
+                        <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="eliminarProducto(${p.id})">🗑️ Borrar</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function guardarProducto() {
+            const id = document.getElementById('prod-id').value;
+            const nombre = document.getElementById('prod-nombre').value.trim();
+            const precio = parseFloat(document.getElementById('prod-precio').value);
+            const categoria = document.getElementById('prod-categoria').value.trim();
+            const disponible = document.getElementById('prod-disponible').value === 'true';
+
+            if(!nombre || isNaN(precio)) {
+                alert("Por favor ingresa nombre y precio válido.");
+                return;
+            }
+
+            if(id) {
+                const p = db.catalogo.find(item => item.id == id);
+                if(p) {
+                    p.nombre = nombre;
+                    p.precio = precio;
+                    p.categoria = categoria;
+                    p.disponible = disponible;
+                    delete p.ejemplo;
+                }
+            } else {
+                const nuevoId = db.catalogo.length > 0 ? Math.max(...db.catalogo.map(p => p.id)) + 1 : 1;
+                db.catalogo.push({ id: nuevoId, nombre, precio, categoria, disponible });
+            }
+
+            guardarDB();
+            closeModal('modal-producto');
+            renderCatalogo();
+            showToast("Producto guardado");
+        }
+
+        function editarProducto(id) {
+            const p = db.catalogo.find(item => item.id == id);
+            if(!p) return;
+            document.getElementById('titulo-modal-producto').textContent = "Editar Producto";
+            document.getElementById('prod-id').value = p.id;
+            document.getElementById('prod-nombre').value = p.nombre;
+            document.getElementById('prod-precio').value = p.precio;
+            document.getElementById('prod-categoria').value = p.categoria || '';
+            document.getElementById('prod-disponible').value = p.disponible ? 'true' : 'false';
+            document.getElementById('modal-producto').classList.add('active');
+        }
+
+        function eliminarProducto(id) {
+            if(confirm("¿Eliminar este producto?")) {
+                db.catalogo = db.catalogo.filter(p => p.id != id);
+                guardarDB();
+                renderCatalogo();
+                showToast("Producto eliminado");
+            }
+        }
+
+        function enviarCatalogoWhatsApp() {
+            let texto = `📋 *CATÁLOGO DE ${db.ajustes.nombre.toUpperCase()}* 📋\n\n`;
+            db.catalogo.filter(p => p.disponible).forEach(p => {
+                texto += `• *${p.nombre}* — $${p.precio.toFixed(2)} MXN\n`;
+            });
+            if(db.ajustes.firma && db.ajustes.firma.trim() !== '') {
+                texto += `\n${db.ajustes.firma}`;
+            }
+            abrirWA('', texto);
+        }
+
+        // --- PEDIDOS ---
+        let renglonesPedidoTemp = [];
+
+        function openModalPedido() {
+            if (!db.catalogo || db.catalogo.length === 0) {
+                showToast("Primero agrega productos en Catálogo");
+                return;
+            }
+            document.getElementById('titulo-modal-pedido').textContent = "Nuevo Pedido";
+            document.getElementById('ped-id').value = '';
+            document.getElementById('ped-cliente').value = '';
+            document.getElementById('ped-telefono').value = '';
+            document.getElementById('ped-entrega').value = 'recoge';
+            document.getElementById('ped-estado').value = 'nuevo';
+            document.getElementById('ped-direccion').value = '';
+            document.getElementById('ped-anticipo').value = '0';
+            document.getElementById('ped-notas').value = '';
+            toggleDireccionEntrega();
+
+            renglonesPedidoTemp = [{ productoId: db.catalogo[0] ? db.catalogo[0].id : 1, cantidad: 1 }];
+            renderRenglonesPedidoModal();
+            document.getElementById('modal-pedido').classList.add('active');
+        }
+
+        function editarPedido(id) {
+            const p = db.pedidos.find(item => item.id == id);
+            if(!p) return;
+
+            document.getElementById('titulo-modal-pedido').textContent = "Editar Pedido";
+            document.getElementById('ped-id').value = p.id;
+            document.getElementById('ped-cliente').value = p.cliente;
+            document.getElementById('ped-telefono').value = p.telefono;
+            document.getElementById('ped-entrega').value = p.entrega;
+            document.getElementById('ped-estado').value = p.estado;
+            document.getElementById('ped-direccion').value = p.direccion || '';
+            document.getElementById('ped-anticipo').value = p.anticipo;
+            document.getElementById('ped-notas').value = p.notas || '';
+            toggleDireccionEntrega();
+
+            renglonesPedidoTemp = JSON.parse(JSON.stringify(p.renglones));
+            renderRenglonesPedidoModal();
+            document.getElementById('modal-pedido').classList.add('active');
+        }
+
+        function toggleDireccionEntrega() {
+            const entrega = document.getElementById('ped-entrega').value;
+            document.getElementById('div-ped-direccion').style.display = entrega === 'domicilio' ? 'block' : 'none';
+        }
+
+        function agregarRenglonPedido() {
+            renglonesPedidoTemp.push({ productoId: db.catalogo[0] ? db.catalogo[0].id : 1, cantidad: 1 });
+            renderRenglonesPedidoModal();
+        }
+
+        function eliminarRenglonPedido(index) {
+            renglonesPedidoTemp.splice(index, 1);
+            renderRenglonesPedidoModal();
+        }
+
+        function renderRenglonesPedidoModal() {
+            const container = document.getElementById('ped-renglones-container');
+            container.innerHTML = '';
+
+            renglonesPedidoTemp.forEach((renglon, idx) => {
+                const div = document.createElement('div');
+                div.className = 'flex-row';
+                div.style.marginBottom = '8px';
+                
+                let optionsHtml = '';
+                db.catalogo.forEach(prod => {
+                    optionsHtml += `<option value="${prod.id}" ${prod.id == renglon.productoId ? 'selected' : ''}>${escapeHTML(prod.nombre)} ($${prod.precio})</option>`;
+                });
+
+                div.innerHTML = `
+                    <select onchange="actualizarRenglonProducto(${idx}, this.value)" style="flex:2; margin-bottom:0;">
+                        ${optionsHtml}
+                    </select>
+                    <input type="number" min="1" value="${renglon.cantidad}" onchange="actualizarRenglonCantidad(${idx}, this.value)" style="flex:1; margin-bottom:0;">
+                    <button class="btn btn-danger" style="padding:8px 10px;" onclick="eliminarRenglonPedido(${idx})">✕</button>
+                `;
+                container.appendChild(div);
+            });
+            calcularTotalesPedido();
+        }
+
+        function actualizarRenglonProducto(idx, val) {
+            renglonesPedidoTemp[idx].productoId = parseInt(val);
+            calcularTotalesPedido();
+        }
+
+        function actualizarRenglonCantidad(idx, val) {
+            renglonesPedidoTemp[idx].cantidad = parseInt(val) || 1;
+            calcularTotalesPedido();
+        }
+
+        function calcularTotalesPedido() {
+            let total = 0;
+            renglonesPedidoTemp.forEach(r => {
+                const p = db.catalogo.find(item => item.id == r.productoId);
+                if(p) {
+                    total += p.precio * r.cantidad;
+                }
+            });
+            const anticipo = parseFloat(document.getElementById('ped-anticipo').value) || 0;
+            const resta = Math.max(0, total - anticipo);
+
+            document.getElementById('ped-total-lbl').textContent = total.toFixed(2);
+            document.getElementById('ped-resta-lbl').textContent = resta.toFixed(2);
+        }
+
+        function guardarPedido() {
+            const id = document.getElementById('ped-id').value;
+            const cliente = document.getElementById('ped-cliente').value.trim();
+            const telefono = document.getElementById('ped-telefono').value.trim();
+            if(!cliente || !telefono) {
+                alert("Nombre y teléfono son obligatorios.");
+                return;
+            }
+
+            // [Chalan] Ignora renglones cuyo producto ya no existe
+            renglonesPedidoTemp = renglonesPedidoTemp.filter(r => db.catalogo.some(item => item.id == r.productoId));
+            if(renglonesPedidoTemp.length === 0) {
+                alert("Agrega al menos un producto del catálogo al pedido.");
+                return;
+            }
+
+            const entrega = document.getElementById('ped-entrega').value;
+            const direccion = document.getElementById('ped-direccion').value.trim();
+            const estado = document.getElementById('ped-estado').value;
+            const anticipo = parseFloat(document.getElementById('ped-anticipo').value) || 0;
+            const notas = document.getElementById('ped-notas').value.trim();
+
+            let total = 0;
+            renglonesPedidoTemp.forEach(r => {
+                const p = db.catalogo.find(item => item.id == r.productoId);
+                if(p) total += p.precio * r.cantidad;
+            });
+            const resta = Math.max(0, total - anticipo);
+
+            if(id) {
+                const p = db.pedidos.find(item => item.id == id);
+                if(p) {
+                    p.cliente = cliente;
+                    p.telefono = telefono;
+                    p.entrega = entrega;
+                    p.direccion = direccion;
+                    p.estado = estado;
+                    p.renglones = [...renglonesPedidoTemp];
+                    p.anticipo = anticipo;
+                    p.total = total;
+                    p.resta = resta;
+                    p.notas = notas;
+                    delete p.ejemplo;
+                }
+            } else {
+                const nuevoFolio = db.pedidos.length > 0 ? Math.max(...db.pedidos.map(p => p.folio || 100)) + 1 : 101;
+                const nuevoId = db.pedidos.length > 0 ? Math.max(...db.pedidos.map(p => p.id)) + 1 : 1;
+
+                db.pedidos.push({
+                    id: nuevoId,
+                    folio: nuevoFolio,
+                    cliente,
+                    telefono,
+                    entrega,
+                    direccion,
+                    estado,
+                    renglones: [...renglonesPedidoTemp],
+                    anticipo,
+                    total,
+                    resta,
+                    notas,
+                    fecha: hoyLocal()
+                });
+            }
+
+            guardarDB();
+            closeModal('modal-pedido');
+            renderPedidos();
+            renderClientes();
+            renderPendientes();
+            renderResumen();
+            showToast("Pedido guardado con éxito");
+        }
+
+        function renderPedidos() {
+            const filtroEstado = document.getElementById('filtro-estado-pedido').value;
+            const query = (document.getElementById('search-pedidos').value || '').toLowerCase();
+            const container = document.getElementById('lista-pedidos');
+            container.innerHTML = '';
+
+            const filtrados = db.pedidos.filter(p => {
+                const matchEstado = filtroEstado === 'todos' || p.estado === filtroEstado;
+                const matchQuery = p.cliente.toLowerCase().includes(query) || p.telefono.includes(query) || String(p.folio).includes(query);
+                return matchEstado && matchQuery;
+            }).sort((a, b) => b.folio - a.folio);
+
+            if(filtrados.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding:20px;">No hay pedidos registrados.</p>';
+                return;
+            }
+
+            filtrados.forEach(p => {
+                let detalleProductos = '';
+                p.renglones.forEach(r => {
+                    const prod = db.catalogo.find(item => item.id == r.productoId);
+                    const nombreProd = prod ? escapeHTML(prod.nombre) : 'Producto eliminado';
+                    detalleProductos += `• ${r.cantidad}x ${nombreProd}<br>`;
+                });
+
+                const badgeClass = `badge badge-${p.estado}`;
+
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                div.innerHTML = `
+                    <div class="list-item-info" style="flex:1;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <strong>Folio #${p.folio}</strong>
+                            <span class="${badgeClass}" style="cursor:pointer;" onclick="ciclarEstadoPedido(${p.id})" title="Toca para cambiar estado">${p.estado.toUpperCase()}</span>
+                        </div>
+                        <h4 style="margin-bottom:2px;">${escapeHTML(p.cliente)} (${escapeHTML(p.telefono)})</h4>
+                        <p style="font-size:0.85rem; margin-bottom:6px;">${detalleProductos}</p>
+                        <p style="font-size:0.85rem;"><strong>Total:</strong> $${p.total.toFixed(2)} | <strong>Anticipo:</strong> $${p.anticipo.toFixed(2)} | <strong style="color:var(--danger);">Resta: $${p.resta.toFixed(2)}</strong></p>
+                        <p style="font-size:0.8rem; color:var(--text-secondary); margin-top:2px;">Entrega: ${p.entrega === 'domicilio' ? 'A domicilio (' + escapeHTML(p.direccion) + ')' : 'Recoge en tienda'} ${p.notas ? '• Nota: ' + escapeHTML(p.notas) : ''}</p>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:6px; min-width: 105px;">
+                        <button class="btn btn-wa" style="padding:6px; font-size:0.8rem;" onclick="enviarResumenPedidoWA(${p.id})">💬 WhatsApp</button>
+                        <button class="btn btn-secondary" style="padding:6px; font-size:0.8rem;" onclick="editarPedido(${p.id})">✏️ Editar</button>
+                        <button class="btn btn-secondary" style="padding:6px; font-size:0.8rem;" onclick="imprimirTicketPedido(${p.id})">🖨️ Ticket</button>
+                        <button class="btn btn-danger" style="padding:4px; font-size:0.75rem;" onclick="eliminarPedido(${p.id})">🗑️ Borrar</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function ciclarEstadoPedido(id) {
+            const p = db.pedidos.find(item => item.id == id);
+            if(!p) return;
+            const estados = ['nuevo', 'preparando', 'listo', 'entregado'];
+            const idx = estados.indexOf(p.estado);
+            p.estado = estados[(idx + 1) % estados.length];
+            guardarDB();
+            renderPedidos();
+            renderPendientes();
+            renderResumen();
+            showToast(`Estado cambiado a: ${p.estado}`);
+        }
+
+        function eliminarPedido(id) {
+            if(confirm("¿Eliminar este pedido?")) {
+                db.pedidos = db.pedidos.filter(p => p.id != id);
+                guardarDB();
+                renderPedidos();
+                renderPendientes();
+                renderResumen();
+                showToast("Pedido eliminado");
+            }
+        }
+
+        function enviarResumenPedidoWA(id) {
+            const p = db.pedidos.find(item => item.id == id);
+            if(!p) return;
+
+            let texto = `🛒 *RESUMEN DE PEDIDO #${p.folio}* 🛒\n`;
+            texto += `Negocio: ${db.ajustes.nombre}\n`;
+            texto += `Cliente: ${p.cliente}\n\n`;
+            texto += `*Productos:*\n`;
+            p.renglones.forEach(r => {
+                const prod = db.catalogo.find(item => item.id == r.productoId);
+                const nombreProd = prod ? prod.nombre : 'Producto';
+                const sub = prod ? (prod.precio * r.cantidad).toFixed(2) : '0.00';
+                texto += `• ${r.cantidad}x ${nombreProd} ($${sub})\n`;
+            });
+            texto += `\nTotal: $${p.total.toFixed(2)} MXN\n`;
+            texto += `Anticipo: $${p.anticipo.toFixed(2)} MXN\n`;
+            texto += `*Resta por pagar: $${p.resta.toFixed(2)} MXN*\n\n`;
+            texto += `Entrega: ${p.entrega === 'domicilio' ? 'A domicilio (' + p.direccion + ')' : 'Recoge en tienda'}\n`;
+            if(p.notas) texto += `Notas: ${p.notas}\n`;
+            texto += `\nEstado actual: *${p.estado.toUpperCase()}*`;
+            texto = conFirma(texto);
+
+            abrirWA(p.telefono, texto);
+        }
+
+        function imprimirTicketPedido(id) {
+            const p = db.pedidos.find(item => item.id == id);
+            if(!p) return;
+
+            let ticketHTML = `
+                <div style="text-align:center; font-weight:bold; font-size:14px; margin-bottom:5px;">${escapeHTML(db.ajustes.nombre)}</div>
+                <div style="text-align:center; margin-bottom:10px;">TICKET DE PEDIDO</div>
+                <div>Folio: #${p.folio}</div>
+                <div>Fecha: ${escapeHTML(p.fecha)}</div>
+                <div>Cliente: ${escapeHTML(p.cliente)}</div>
+                <div>Tel: ${escapeHTML(p.telefono)}</div>
+                <div style="border-top:1px dashed #000; margin:5px 0;"></div>
+            `;
+            p.renglones.forEach(r => {
+                const prod = db.catalogo.find(item => item.id == r.productoId);
+                const nombreProd = prod ? escapeHTML(prod.nombre) : 'Producto';
+                const sub = prod ? (prod.precio * r.cantidad).toFixed(2) : '0.00';
+                ticketHTML += `<div>${r.cantidad}x ${nombreProd}</div><div style="text-align:right;">$${sub}</div>`;
+            });
+            ticketHTML += `
+                <div style="border-top:1px dashed #000; margin:5px 0;"></div>
+                <div style="text-align:right; font-weight:bold;">TOTAL: $${p.total.toFixed(2)}</div>
+                <div style="text-align:right;">Anticipo: $${p.anticipo.toFixed(2)}</div>
+                <div style="text-align:right; font-weight:bold;">RESTA: $${p.resta.toFixed(2)}</div>
+                <div style="border-top:1px dashed #000; margin:5px 0;"></div>
+                <div>Entrega: ${escapeHTML(p.entrega)}</div>
+                ${p.direccion ? '<div>Dir: ' + escapeHTML(p.direccion) + '</div>' : ''}
+                <div style="text-align:center; margin-top:10px; font-size:10px;">¡Gracias por su compra!</div>
+            `;
+
+            document.getElementById('print-ticket-area').innerHTML = ticketHTML;
+            document.body.classList.add('imprimiendo-ticket');
+            window.print();
+        }
+
+        window.onafterprint = function() {
+            document.body.classList.remove('imprimiendo-ticket');
+            document.body.classList.remove('imprimiendo-resumen');
+        };
+
+        // --- CLIENTES ---
+        function renderClientes() {
+            const query = (document.getElementById('search-clientes').value || '').toLowerCase();
+            const container = document.getElementById('lista-clientes');
+            container.innerHTML = '';
+
+            let mapClientes = {};
+            db.pedidos.forEach(p => {
+                if(!mapClientes[p.telefono]) {
+                    mapClientes[p.telefono] = {
+                        nombre: p.cliente,
+                        telefono: p.telefono,
+                        totalGastado: 0,
+                        pedidosCount: 0,
+                        ultimoPedido: p.fecha
+                    };
+                }
+                mapClientes[p.telefono].totalGastado += p.total;
+                mapClientes[p.telefono].pedidosCount++;
+            });
+
+            let lista = Object.values(mapClientes).filter(c => 
+                c.nombre.toLowerCase().includes(query) || c.telefono.includes(query)
+            );
+            clientesRender = lista;
+
+            if(lista.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding:20px;">No hay clientes registrados.</p>';
+                return;
+            }
+
+            lista.forEach((c, index) => {
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                div.innerHTML = `
+                    <div class="list-item-info">
+                        <h4>${escapeHTML(c.nombre)}</h4>
+                        <p>Tel: ${escapeHTML(c.telefono)} • Pedidos: ${c.pedidosCount}</p>
+                        <p style="margin-top:2px;">Total comprado: <strong>$${c.totalGastado.toFixed(2)} MXN</strong></p>
+                    </div>
+                    <div>
+                        <button class="btn btn-wa" style="padding:6px 10px; font-size:0.8rem;" onclick="waCliente(${index})">💬 WhatsApp</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function waCliente(index) {
+            const c = clientesRender[index];
+            if(!c) return;
+            let msg = `Hola ${c.nombre}, te saludamos de ${db.ajustes.nombre}. ¿En qué podemos servirte?`;
+            if(db.ajustes.firma && db.ajustes.firma.trim() !== '') {
+                msg += "\n\n" + db.ajustes.firma;
+            }
+            abrirWA(c.telefono, msg);
+        }
+
+        // --- PENDIENTES ---
+        function renderPendientes() {
+            const container = document.getElementById('lista-pendientes');
+            container.innerHTML = '';
+
+            let htmlPedidosListos = '';
+            db.pedidos.filter(p => p.estado === 'listo').forEach(p => {
+                htmlPedidosListos += `
+                    <div class="list-item" style="border-color:var(--warning);">
+                        <div class="list-item-info">
+                            <span class="badge badge-listo">PEDIDO LISTO</span>
+                            <h4>${escapeHTML(p.cliente)} (Folio #${p.folio})</h4>
+                            <p>El pedido está listo para entrega (${p.entrega}). Resta: $${p.resta.toFixed(2)}</p>
+                        </div>
+                        <div>
+                            <button class="btn btn-wa" style="padding:6px 10px; font-size:0.8rem;" onclick="avisarListo(${p.id})">📢 Avisar</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            let htmlPendientesManuales = '';
+            db.pendientes.forEach(item => {
+                htmlPendientesManuales += `
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <span class="badge" style="background-color:var(--border-color); color:var(--text-secondary); margin-bottom:2px;">${escapeHTML(item.fecha || '')}</span>
+                            <h4>${escapeHTML(item.nombre)} (${escapeHTML(item.telefono)})</h4>
+                            <p>${escapeHTML(item.nota)}</p>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:6px;">
+                            ${item.telefono ? `<button class="btn btn-wa" style="padding:4px 8px; font-size:0.75rem;" onclick="waPendiente(${item.id})">💬 WhatsApp</button>` : ''}
+                            <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="eliminarPendiente(${item.id})">✓ Hecho</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if(!htmlPedidosListos && db.pendientes.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding:20px;">No hay pendientes ni avisos.</p>';
+                return;
+            }
+
+            container.innerHTML = htmlPedidosListos + htmlPendientesManuales;
+        }
+
+        function avisarListo(id) {
+            const p = db.pedidos.find(item => item.id == id);
+            if(!p) return;
+            let msg = `Hola ${p.cliente}, te escribimos de ${db.ajustes.nombre} para avisarte que tu pedido #${p.folio} ya está LISTO. 🌮`;
+            if(db.ajustes.firma && db.ajustes.firma.trim() !== '') {
+                msg += "\n\n" + db.ajustes.firma;
+            }
+            abrirWA(p.telefono, msg);
+        }
+
+        function waPendiente(id) {
+            const item = db.pendientes.find(i => i.id == id);
+            if(!item) return;
+            let msg = `Hola ${item.nombre}, te saludamos de ${db.ajustes.nombre}.`;
+            if(db.ajustes.firma && db.ajustes.firma.trim() !== '') {
+                msg += "\n\n" + db.ajustes.firma;
+            }
+            abrirWA(item.telefono, msg);
+        }
+
+        function guardarPendiente() {
+            const nombre = document.getElementById('pend-nombre').value.trim();
+            const telefono = document.getElementById('pend-telefono').value.trim();
+            const nota = document.getElementById('pend-nota').value.trim();
+
+            if(!nombre || !nota) {
+                alert("Completa el nombre y la nota.");
+                return;
+            }
+
+            const nuevoId = db.pendientes.length > 0 ? Math.max(...db.pendientes.map(p => p.id)) + 1 : 1;
+            db.pendientes.push({ id: nuevoId, nombre, telefono, nota, fecha: hoyLocal(), hecho: false });
+            guardarDB();
+            closeModal('modal-pendiente');
+            renderPendientes();
+            showToast("Pendiente guardado");
+        }
+
+        function eliminarPendiente(id) {
+            db.pendientes = db.pendientes.filter(p => p.id != id);
+            guardarDB();
+            renderPendientes();
+            showToast("Pendiente completado");
+        }
+
+        // --- RESUMEN DEL DÍA ---
+        function renderResumen() {
+            const fechaSeleccionada = document.getElementById('resumen-fecha').value;
+            const container = document.getElementById('contenido-resumen');
+
+            const pedidosHoy = db.pedidos.filter(p => p.fecha === fechaSeleccionada);
+            
+            let totalVentas = 0;
+            let totalAnticipos = 0;
+            let estadosCount = { nuevo: 0, preparando: 0, listo: 0, entregado: 0 };
+            let prodMasVendidos = {};
+
+            pedidosHoy.forEach(p => {
+                totalVentas += p.total;
+                totalAnticipos += p.anticipo;
+                if(estadosCount[p.estado] !== undefined) estadosCount[p.estado]++;
+                
+                p.renglones.forEach(r => {
+                    prodMasVendidos[r.productoId] = (prodMasVendidos[r.productoId] || 0) + r.cantidad;
+                });
+            });
+
+            const ticketPromedio = pedidosHoy.length > 0 ? totalVentas / pedidosHoy.length : 0;
+
+            let htmlProd = '';
+            Object.keys(prodMasVendidos).forEach(prodId => {
+                const prod = db.catalogo.find(item => item.id == prodId);
+                const nombre = prod ? escapeHTML(prod.nombre) : 'Producto';
+                htmlProd += `<li>${nombre}: <strong>${prodMasVendidos[prodId]} unidades</strong></li>`;
+            });
+
+            container.innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                    <div style="background:var(--border-color); padding:12px; border-radius:8px;">
+                        <p style="font-size:0.8rem; color:var(--text-secondary);">Ventas Totales</p>
+                        <h3 style="font-size:1.3rem; color:var(--primary);">$${totalVentas.toFixed(2)}</h3>
+                    </div>
+                    <div style="background:var(--border-color); padding:12px; border-radius:8px;">
+                        <p style="font-size:0.8rem; color:var(--text-secondary);">Pedidos Realizados</p>
+                        <h3 style="font-size:1.3rem;">${pedidosHoy.length}</h3>
+                    </div>
+                    <div style="background:var(--border-color); padding:12px; border-radius:8px;">
+                        <p style="font-size:0.8rem; color:var(--text-secondary);">Ticket Promedio</p>
+                        <h3 style="font-size:1.1rem;">$${ticketPromedio.toFixed(2)}</h3>
+                    </div>
+                    <div style="background:var(--border-color); padding:12px; border-radius:8px;">
+                        <p style="font-size:0.8rem; color:var(--text-secondary);">Anticipos Cobrados</p>
+                        <h3 style="font-size:1.1rem; color:var(--success);">$${totalAnticipos.toFixed(2)}</h3>
+                    </div>
+                </div>
+                <p style="margin-bottom:8px;"><strong>Por estado:</strong> Nuevos: ${estadosCount.nuevo} | Preparando: ${estadosCount.preparando} | Listos: ${estadosCount.listo} | Entregados: ${estadosCount.entregado}</p>
+                <p style="margin-bottom:4px;"><strong>Productos más vendidos hoy:</strong></p>
+                <ul style="padding-left:20px; font-size:0.9rem; color:var(--text-secondary);">${htmlProd || '<li>Sin ventas registradas en esta fecha</li>'}</ul>
+            `;
+        }
+
+        function compartirResumenWhatsApp() {
+            const fecha = document.getElementById('resumen-fecha').value;
+            const pedidosHoy = db.pedidos.filter(p => p.fecha === fecha);
+            let total = 0;
+            pedidosHoy.forEach(p => total += p.total);
+
+            let texto = `📊 *RESUMEN DIARIO - ${db.ajustes.nombre}* (${fecha})\n\n`;
+            texto += `Total de pedidos: ${pedidosHoy.length}\n`;
+            texto += `Ventas totales: $${total.toFixed(2)} MXN`;
+            if(db.ajustes.firma && db.ajustes.firma.trim() !== '') {
+                texto += `\n\n${db.ajustes.firma}`;
+            }
+
+            abrirWA('', texto);
+        }
+
+        function imprimirResumenDelDia() {
+            document.body.classList.add('imprimiendo-resumen');
+            window.print();
+        }
+
+        // --- IA / GEMINI ---
+        function guardarGeminiKey() {
+            const key = document.getElementById('input-gemini-key').value.trim();
+            if(!key) {
+                alert("Ingresa una llave válida.");
+                return;
+            }
+            localStorage.setItem(GEMINI_KEY_STORAGE, key);
+            showToast("Llave de Gemini guardada de forma segura");
+        }
+
+        function borrarGeminiKey() {
+            localStorage.removeItem(GEMINI_KEY_STORAGE);
+            document.getElementById('input-gemini-key').value = '';
+            showToast("Llave eliminada");
+        }
+
+        async function sugerirRespuestaIA() {
+            const key = localStorage.getItem(GEMINI_KEY_STORAGE);
+            if(!key) {
+                alert("Primero ingresa y guarda tu llave API de Gemini.");
+                return;
+            }
+            const mensajeCliente = document.getElementById('ia-mensaje-cliente').value.trim();
+            if(!mensajeCliente) {
+                alert("Escribe el mensaje que te envió el cliente.");
+                return;
+            }
+
+            showToast("Generando sugerencia con Gemini...");
+
+            let contextoCatalogo = db.catalogo.map(p => `- ${p.nombre}: $${p.precio} MXN (${p.disponible ? 'Disponible' : 'No disponible'})`).join('\n');
+            let contextoRespuestas = db.respuestas.map(r => `- [${r.titulo}]: ${r.texto}`).join('\n');
+
+            const prompt = `Eres el asistente virtual del negocio "${db.ajustes.nombre}".
+Catálogo de productos:
+${contextoCatalogo}
+
+Respuestas de referencia:
+${contextoRespuestas}
+
+El cliente mandó el siguiente mensaje:
+"${mensajeCliente}"
+
+Redacta una respuesta corta, amable y directa en español de México, usando la información del catálogo y sin inventar precios. Incluye un saludo adecuado. No añadas firmas largas.`;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-goog-api-key': key
+                    },
+                    body: JSON.stringify({
+                        contents: [{ role: 'user', parts: [{ text: prompt }] }]
+                    })
+                });
+
+                if(!response.ok) {
+                    if(response.status === 401 || response.status === 403 || response.status === 400) {
+                        throw new Error("Tu llave no es válida");
+                    } else if(response.status === 429) {
+                        throw new Error("Llegaste al límite de uso, espera un rato");
+                    } else {
+                        throw new Error("No se pudo, intenta de nuevo");
+                    }
+                }
+
+                const data = await response.json();
+                const textoSugerido = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0].text 
+                    ? data.candidates[0].content.parts[0].text 
+                    : "No se pudo generar respuesta.";
+
+                document.getElementById('ia-texto-sugerido').value = textoSugerido.trim();
+                document.getElementById('ia-resultado-container').style.display = 'block';
+                showToast("¡Sugerencia lista!");
+
+            } catch(err) {
+                console.error(err);
+                let mensajeError = "No se pudo, intenta de nuevo";
+                if(err.message === "Failed to fetch" || err.name === "TypeError") {
+                    mensajeError = "Sin internet";
+                } else if(err.message.includes("llave no es válida") || err.message.includes("límite de uso")) {
+                    mensajeError = err.message;
+                }
+                showToast("⚠️ " + mensajeError);
+                alert("Error con Gemini: " + mensajeError);
+            }
+        }
+
+        function copiarSugerenciaIA() {
+            const texto = document.getElementById('ia-texto-sugerido').value;
+            navigator.clipboard.writeText(conFirma(texto));
+            showToast("Respuesta copiada al portapapeles");
+        }
+
+        function enviarSugerenciaIAWhatsApp() {
+            const texto = conFirma(document.getElementById('ia-texto-sugerido').value);
+            abrirWA('', texto);
+        }
+
+        // --- AJUSTES Y RESPALDOS ---
+        function guardarAjustes() {
+            db.ajustes.nombre = document.getElementById('ajuste-nombre').value.trim() || "Mi Negocio";
+            db.ajustes.telefono = document.getElementById('ajuste-telefono').value.trim();
+            db.ajustes.firma = document.getElementById('ajuste-firma').value.trim();
+            guardarDB();
+            showToast("Ajustes guardados");
+        }
+
+        function exportarJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", `respaldo_asistente_whatsapp_${hoyLocal()}.json`);
+            dlAnchorElem.click();
+            showToast("Respaldo exportado con éxito");
+        }
+
+        function exportarCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,Folio,Cliente,Telefono,Entrega,Estado,Total,Anticipo,Resta,Fecha\n";
+            db.pedidos.forEach(p => {
+                let row = [p.folio, `"${p.cliente}"`, p.telefono, p.entrega, p.estado, p.total, p.anticipo, p.resta, p.fecha];
+                csvContent += row.join(",") + "\n";
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `pedidos_${hoyLocal()}.csv`);
+            link.click();
+            showToast("Pedidos exportados en CSV");
+        }
+
+        function importarJSON(event) {
+            const fileReader = new FileReader();
+            if(event.target.files[0]) {
+                fileReader.readAsText(event.target.files[0], "UTF-8");
+                fileReader.onload = function(e) {
+                    try {
+                        const parsed = JSON.parse(e.target.result);
+                        if(parsed && typeof parsed.ajustes === 'object' && Array.isArray(parsed.catalogo) && Array.isArray(parsed.pedidos)) {
+                            if(!Array.isArray(parsed.respuestas)) parsed.respuestas = [];
+                            if(!Array.isArray(parsed.pendientes)) parsed.pendientes = [];
+                            if(confirm("¿Estás seguro de importar este respaldo? Se sobrescribirán los datos actuales.")) {
+                                db = parsed;
+                                guardarDB();
+                                initApp();
+                                showToast("Respaldo importado correctamente");
+                            }
+                        } else {
+                            alert("El archivo no tiene el formato válido.");
+                        }
+                    } catch(err) {
+                        alert("Error al leer el archivo JSON.");
+                    }
+                    event.target.value = '';
+                }
+            }
+        }
+
+        function borrarDatosEjemplo() {
+            if(confirm("¿Borrar únicamente los datos de ejemplo precargados?")) {
+                db.respuestas = db.respuestas.filter(r => !r.ejemplo);
+                db.catalogo = db.catalogo.filter(p => !p.ejemplo);
+                db.pedidos = db.pedidos.filter(p => !p.ejemplo);
+                db.pendientes = db.pendientes.filter(pn => !pn.ejemplo);
+                guardarDB();
+                initApp();
+                showToast("Datos de ejemplo eliminados");
+            }
+        }
+
+        function borrarTodosLosDatos() {
+            if(confirm("ATENCIÓN: ¿Borrar TODOS los datos de la app? Quedará completamente vacía.")) {
+                if(confirm("¿Estás 100% seguro?")) {
+                    db = {
+                        ajustes: { nombre: "Mi Negocio", telefono: "", firma: "" },
+                        respuestas: [],
+                        catalogo: [],
+                        pedidos: [],
+                        pendientes: []
+                    };
+                    guardarDB();
+                    initApp();
+                    showToast("Todos los datos fueron borrados");
+                }
+            }
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>
